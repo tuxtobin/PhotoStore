@@ -4,22 +4,27 @@ import os
 from store import files
 
 
+# Main photo processing function
 def process(args):
     logger.debug('Calling process')
     return
 
 
+# File functions
 def file(args):
     logger.debug('Calling file')
 
+    # Confirm the destination is good
     if not os.path.exists(args.destination):
         logger.error('Directory does not exist')
         exit(1)
 
+    # Perform checksums
     files.checksums(args.destination)
     return
 
 
+# Directory functions
 def directory(args):
     logger.debug('Calling directory')
     return
@@ -29,11 +34,14 @@ def default(args):
     return
 
 
+# Main function
 def main():
+    # Configure parennt argparse with dummy function (prevents error when called without any arguments)
     parser = argparse.ArgumentParser(add_help=True)
     parser.set_defaults(func=default)
     sub_parser = parser.add_subparsers()
 
+    # Configure separate subparsers for the individual functions
     parser_process = sub_parser.add_parser('process', help='Sort image files')
     parser_process.add_argument('-s', '--source', required=True, type=str, help='Source directory')
     parser_process.add_argument('-d', '--destination', required=True, type=str, help='Destination directory')
@@ -61,7 +69,9 @@ def main():
     return
 
 
+# Entrypoint
 if __name__ == "__main__":
+    # Setup logging
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(funcName)s - %(message)s',
