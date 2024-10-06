@@ -16,7 +16,7 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 
-# Main entrypoint to perform checksums for all directories
+# Main entrypoint to perform checksums for all files
 def checksums(destination):
     logger.debug('Calling checksums')
     workers = 5
@@ -33,13 +33,13 @@ def checksums(destination):
     # Setup thread pool
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
         # Process each directory
-        executor.map(directory_checksum, paths)
+        executor.map(file_checksum, paths)
 
     return
 
 
 # Individual directory checksum
-def directory_checksum(directory):
+def file_checksum(directory):
     logger.debug('Processing {}'.format(directory))
     # Setup hash dictionary
     photo_hashes = dict()
