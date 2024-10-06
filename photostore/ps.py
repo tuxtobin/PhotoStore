@@ -1,7 +1,7 @@
 import argparse
 import logging
 import os
-from store import files
+from store import files, directories
 
 
 # Main photo processing function
@@ -27,6 +27,15 @@ def file(args):
 # Directory functions
 def directory(args):
     logger.debug('Calling directory')
+
+    # Confirm the destination is good
+    if not os.path.exists(args.destination):
+        logger.error('Directory does not exist')
+        exit(1)
+
+    # Perform directory checksums and compress (if requested)
+    directories.checksums(args.destination, args.compress)
+
     return
 
 
@@ -36,7 +45,7 @@ def default(args):
 
 # Main function
 def main():
-    # Configure parennt argparse with dummy function (prevents error when called without any arguments)
+    # Configure parent argparse with dummy function (prevents error when called without any arguments)
     parser = argparse.ArgumentParser(add_help=True)
     parser.set_defaults(func=default)
     sub_parser = parser.add_subparsers()
@@ -58,8 +67,6 @@ def main():
     parser_directory = sub_parser.add_parser('directory', help='Directory processing')
     parser_directory.add_argument('-d', '--destination', required=True, type=str,
                                   help='Destination directory to process')
-    parser_directory.add_argument('-i', '--initial', required=False, action='store_true',
-                                  help='Generation initial directory checksums')
     parser_directory.add_argument('-c', '--compress', required=False, action='store_true',
                                   help='Compress directories where the hashes do not match')
     parser_directory.set_defaults(func=directory)
