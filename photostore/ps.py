@@ -1,11 +1,12 @@
 import argparse
 import logging
 import os
+from pathlib import Path
 from store import files, directories, process
 
 
 # Main photo processing function
-def process(args):
+def store(args):
     logger.debug('Calling process')
 
     # Check that the source is good
@@ -24,13 +25,15 @@ def process(args):
         exit(1)
 
     # Don't create directories if it's a dry run
-    if not args.dry-run:
+    if not args.dryrun:
         Path(args.destination).mkdir(parents=True, exist_ok=True)
+        dup_path = os.path.join(args.destination, 'Dup')
+        bad_path = os.path.join(args.destination, 'Bad')
         Path(dup_path).mkdir(parents=True, exist_ok=True)
         Path(bad_path).mkdir(parents=True, exist_ok=True)
 
     # Process files
-    process.processing(args.source, args.destination, args.dry-run, args.exiftool)
+    process.processing(args.source, args.destination, args.dryrun, args.exiftool)
 
     return
 
@@ -75,13 +78,13 @@ def main():
     sub_parser = parser.add_subparsers()
 
     # Configure separate subparsers for the individual functions
-    parser_process = sub_parser.add_parser('process', help='Sort image files')
+    parser_process = sub_parser.add_parser('store', help='Sort image files')
     parser_process.add_argument('-s', '--source', required=True, type=str, help='Source directory')
     parser_process.add_argument('-d', '--destination', required=True, type=str, help='Destination directory')
     parser_process.add_argument('-e', '--exiftool', required=False, type=str, help='Location of exiftool executable')
-    parser_process.add_argument('-t', '--dry-run', required=False, action='store_true',
+    parser_process.add_argument('-t', '--dryrun', required=False, action='store_true',
                                 help='Run without copying any files')
-    parser_process.set_defaults(func=process)
+    parser_process.set_defaults(func=store)
 
     parser_file = sub_parser.add_parser('file', help='Build file checksums')
     parser_file.add_argument('-d', '--destination', required=True, type=str,
