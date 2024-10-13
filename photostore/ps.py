@@ -1,12 +1,37 @@
 import argparse
 import logging
 import os
-from store import files, directories
+from store import files, directories, process
 
 
 # Main photo processing function
 def process(args):
     logger.debug('Calling process')
+
+    # Check that the source is good
+    if not os.path.exists(args.source):
+        logger.error('Source directory does not exist')
+        exit(1)
+
+    # Check that the destination is good
+    if not os.path.exists(args.destination):
+        logger.error('Destination directory does not exist')
+        exit(1)
+
+    # Check that the exiftool exists
+    if not os.path.exists(args.exiftool):
+        logger.error('Exiftool does not exist')
+        exit(1)
+
+    # Don't create directories if it's a dry run
+    if not args.dry-run:
+        Path(args.destination).mkdir(parents=True, exist_ok=True)
+        Path(dup_path).mkdir(parents=True, exist_ok=True)
+        Path(bad_path).mkdir(parents=True, exist_ok=True)
+
+    # Process files
+    process.processing(args.source, args.destination, args.dry-run, args.exiftool)
+
     return
 
 
@@ -35,7 +60,6 @@ def directory(args):
 
     # Perform directory checksums and compress (if requested)
     directories.checksums(args.destination, args.compress)
-
     return
 
 
