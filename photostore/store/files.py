@@ -38,7 +38,7 @@ def checksums(destination):
     return
 
 
-# Individual directory checksum
+# Individual file checksum
 def file_checksum(directory):
     logger.debug('Processing {}'.format(directory))
     # Setup hash dictionary
@@ -54,7 +54,7 @@ def file_checksum(directory):
         photo_hash = photos.photo_hash(file)
         photo_hashes[file] = photo_hash
 
-    # Save the hashes into the dirtionary
+    # Save the hashes into the dictionary
     hash_file = os.path.join(directory, 'file_hash.pkl')
     with open(hash_file, 'wb') as f:
         pickle.dump(photo_hashes, f)
