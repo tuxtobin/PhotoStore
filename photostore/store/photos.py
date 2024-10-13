@@ -2,6 +2,7 @@ import hashlib
 import logging
 import exiftool
 import datetime
+import os
 
 
 # Setup logging
@@ -101,7 +102,7 @@ class Photo:
                 if date == '    :  :  ' or date == '0000:00:00':
                     continue
                 date = datetime.datetime.strptime(date, '%Y:%m:%d')
-                tag_dict[tag](date)
+                exif_tags[tag](date)
         return
 
     # Determine the likely year and month the photo was taken
@@ -124,5 +125,52 @@ class Photo:
             date = self.file_modify_date
             self.exif_tag = 'File:FileModifyDate'
 
-        self.directory_date = date.strftime('%Y_%m')
+        # Get the directory date from current file path
+        # This maybe the only option to get a date associated with the file, as some files may not accurate
+        # EXIF data
+        current_directory_date = os.path.basename(self.path)
+        date_flag = False
+
+        # The file path ends with just a year
+        if not date_flag:
+            try:
+                current_directory_date = datetime.datetime.strptime(current_directory_date, '%Y')
+                date_flag = True
+            except ValueError:
+                date_flag = False
+
+        # The file path ends with YYYYMM__ - iPhone format
+        if not date_flag:
+            try:
+                current_directory_date = datetime.datetime.strptime(current_directory_date, '%Y%m__')
+                date_flag = True
+            except ValueError:
+                date_flag = False
+
+        # The file path ends with YYYY_MM_DD
+        if not date_flag:
+            try:
+                current_directory_date = datetime.datetime.strptime(current_directory_date, '%Y_%m_%d')
+                date_flag = True
+            except ValueError:
+                date_flag = False
+
+        # There is no date in the file path so just used the date from the metadata - but of a catch-all
+        if not date_flag:
+            current_directory_date = date
+
+        # If the file extension is jpg or jpeg then the EXIF date data is unreliable so use the directory date the date
+        if os.path.splitext(self.name)[1].lower() in ['.jpg', '.jpeg']:
+            date = current_directory_date
+            self.exif_tag = 'JPG Unknown'
+
+        # If the difference between the dates is greater than 365 days then use the existing directory date as the
+        # new directory date
+        if abs((date - current_directory_date).days) > 365:
+            self.directory_date = current_directory_date.strftime('%Y_%m')
+            self.exif_tag = 'Unknown'
+        # Else use date acquired from the EXIF data
+        else:
+            self.directory_date = date.strftime('%Y_%m')
+
         return
