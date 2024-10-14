@@ -2,7 +2,6 @@ import logging
 import os
 from dirhash import dirhash
 import pickle
-from itertools import repeat
 import concurrent.futures
 import pyminizip
 
