@@ -4,6 +4,8 @@ import pickle
 import concurrent.futures
 import shutil
 from store import photos
+from threading import Lock
+from itertools import repeat
 
 
 # Setup logging
@@ -15,6 +17,9 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
+master_hashes = dict()
+lock = Lock()
+
 
 # Process each file in each directory
 def processing(source, destination, dryrun, exiftool):
@@ -24,7 +29,6 @@ def processing(source, destination, dryrun, exiftool):
     # Set variables
     dup_path = os.path.join(destination, 'Dup')
     bad_path = os.path.join(destination, 'Bad')
-    master_hashes = dict()
     directory_hashes = dict()
 
     # Create list of all the source directories
@@ -47,8 +51,9 @@ def processing(source, destination, dryrun, exiftool):
         directory_hashes.update(hash_map)
 
     # Process all the source directories
-    for path in src_paths:
-        process_files(path, destination, dryrun, exiftool, dup_path, bad_path, master_hashes, directory_hashes)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+        executor.map(process_files, src_paths, repeat(destination), repeat(dryrun), repeat(exiftool), repeat(dup_path),
+                     repeat(bad_path), repeat(directory_hashes))
 
     return
 
@@ -69,9 +74,11 @@ def check_file(file):
     return tmp_file, renamed
 
 
-def process_files(path, destination, dryrun, exiftool, dup_path, bad_path, master_hashes, directory_hashes):
+def process_files(path, destination, dryrun, exiftool, dup_path, bad_path, directory_hashes):
     logger.debug('Processing directory {}'.format(path))
     invalid_types = ['.db', '.aae', '.info', '.scn', '.lib', '.ini', '.zip', '.thm', '.log', '.txt', '.pkl']
+    global master_hashes
+    global lock
 
     files = [file for file in os.scandir(path) if file.is_file()]
     for file in files:
@@ -134,6 +141,8 @@ def process_files(path, destination, dryrun, exiftool, dup_path, bad_path, maste
             logger.info('{} copied to {}{}'.format(file.path, dest_path, renamed))
 
             # Squirrel away the hash and file path
+            lock.acquire()
             master_hashes[photo_hash] = file.path
+            lock.release()
 
     return
